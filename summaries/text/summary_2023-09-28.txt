@@ -1,0 +1,1 @@
+There is a response error. The user is unable to get a response. The user is asked to double-check the cookie values and verify the network environment or google account.

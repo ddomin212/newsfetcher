@@ -1,18 +1,31 @@
+import os
 import re
 from datetime import datetime, timedelta
 
 import googleapiclient.discovery
+from dotenv import load_dotenv
 from google.oauth2 import service_account
 from langchain.document_loaders import YoutubeLoader
+from langchain.document_loaders.base import Document
+
+load_dotenv()
 
 # Set up the API client
-api_key = "AIzaSyD91OGsIihNZErxJcN-_Z2srudr7T1Oe2c"
+api_key = os.getenv("GOOGLE_API_KEY")
 service = googleapiclient.discovery.build(
     "youtube", "v3", developerKey=api_key
 )
 
 
-def get_transcript(video_id):
+def get_transcript(video_id: str) -> list[Document]:
+    """Get the transcript of a YouTube video
+
+    Arguments:
+        video_id {str} -- The ID of the YouTube video
+
+    Returns:
+        list[Document] -- The transcript of the YouTube video in langchain Document format
+    """
     loader = YoutubeLoader.from_youtube_url(
         f"https://www.youtube.com/watch?v={video_id}",
         language="en",
@@ -21,7 +34,13 @@ def get_transcript(video_id):
     return transcript
 
 
-def get_videos_last_week(channel_id, videos):
+def get_videos(channel_id: str, videos: list[dict[str, str]]) -> None:
+    """Get the videos from a YouTube channel in the last 24 hours
+
+    Arguments:
+        channel_id {str} -- The ID of the YouTube channel
+        videos {list[dict[str, str]]} -- The list to append the new videos to
+    """
     one_day_ago = (datetime.now() - timedelta(days=1)).isoformat() + "Z"
 
     request = service.search().list(
@@ -40,7 +59,12 @@ def get_videos_last_week(channel_id, videos):
         videos.append({"title": video_title, "id": video_id})
 
 
-def get_channel_id(channel_url):
+def get_channel_id(channel_url: str) -> str | None:
+    """Get the ID of a YouTube channel from the URL
+
+    Arguments:
+        channel_url {str} -- The URL of the YouTube channel
+    """
     match = re.search(r"/@([\w-]+)/", channel_url)
     if match:
         username = match.group(1)
@@ -61,8 +85,12 @@ def get_channel_id(channel_url):
     return None
 
 
-def get_videos():
-    # Example channel URL
+def get_videos_yesterday() -> str:
+    """Get the videos from the last 24 hours from the channels in channel_urls
+
+    Returns:
+        str -- The videos from the last 24 hours as a string
+    """
     channel_urls = [
         "https://www.youtube.com/@MattVidPro/videos",
         "https://www.youtube.com/@airevolutionx/videos",
@@ -75,15 +103,12 @@ def get_videos():
     videos = []
     for url in channel_urls:
         channel_id = get_channel_id(url)
-        get_videos_last_week(channel_id, videos)
-
-    # print(len(videos))
+        get_videos(channel_id, videos)
 
     corpora = ""
     docs = []
     for video in videos:
         doc = get_transcript(video["id"])
-        # print(len(doc))
         docs.append(doc[0].page_content)
         corpora += doc[0].page_content + ". "
 

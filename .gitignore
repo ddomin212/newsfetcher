@@ -1,3 +1,5 @@
 *.json
 /menv
 **/__pycache__
+/ignored
+.env
