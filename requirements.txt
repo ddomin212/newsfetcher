@@ -1,0 +1,5 @@
+beautifulsoup4==4.12.2
+cssutils==2.7.1
+google-api-python-client==2.100.0
+google-auth-oauthlib==1.1.0
+pip-chill==1.0.3
